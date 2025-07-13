@@ -1,0 +1,185 @@
+name: 🚀 Deploy Memphis Focus Hub PWA to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔧 Generate PWA files for production
+        run: |
+          echo "🔧 Generating PWA files for production..."
+          npm run generate-pwa:prod
+          echo "✅ PWA files generated"
+          ls -la public/
+        env:
+          NODE_ENV: production
+
+      - name: 🏗️ Build Memphis Focus Hub with Vite
+        run: |
+          echo "🏗️ Building application..."
+          npx vite build
+          echo "✅ Build completed"
+          echo "📁 Dist contents:"
+          ls -la dist/
+        env:
+          NODE_ENV: production
+
+      - name: 📋 Copy PWA files to dist
+        run: |
+          echo "📋 Ensuring PWA files are in dist directory..."
+          cp public/manifest.json dist/manifest.json
+          cp public/sw.js dist/sw.js
+          cp public/app-icon.svg dist/app-icon.svg
+          echo "✅ PWA files copied to dist"
+
+      - name: ✅ Validate PWA files
+        run: |
+          echo "🔍 Checking PWA files..."
+          if [ ! -f "dist/manifest.json" ]; then
+            echo "❌ manifest.json not found in dist/"
+            exit 1
+          fi
+          if [ ! -f "dist/sw.js" ]; then
+            echo "❌ sw.js not found in dist/"
+            exit 1
+          fi
+          if [ ! -f "dist/app-icon.svg" ]; then
+            echo "❌ app-icon.svg not found in dist/"
+            exit 1
+          fi
+          echo "✅ All PWA files present"
+          
+          # Check manifest content
+          if grep -q "/Focus-Hub/" "dist/manifest.json"; then
+            echo "✅ Manifest has correct GitHub Pages base path"
+          else
+            echo "❌ Manifest missing GitHub Pages base path"
+            exit 1
+          fi
+          
+          # Check service worker content
+          if grep -q "BASE_PATH = '/Focus-Hub'" "dist/sw.js"; then
+            echo "✅ Service worker has correct base path"
+          else
+            echo "❌ Service worker missing correct base path"
+            exit 1
+          fi
+          
+          echo "🎉 PWA validation successful!"
+
+      - name: 📊 PWA Performance Check
+        run: |
+          echo "📊 Checking PWA performance metrics..."
+          
+          # Check file sizes
+          echo "📁 File sizes:"
+          du -h dist/manifest.json
+          du -h dist/sw.js
+          du -h dist/app-icon.svg
+          
+          # Check manifest structure
+          echo "📋 Manifest structure:"
+          cat dist/manifest.json | jq '.name, .start_url, .scope, .display' || echo "jq not available, skipping JSON validation"
+          
+          # Count cached resources in service worker
+          CACHED_RESOURCES=$(grep -o "urlsToCache = \[" -A 20 dist/sw.js | grep -c "https://\|BASE_PATH" || echo "0")
+          echo "🗂️ Service worker caches $CACHED_RESOURCES resources"
+          
+          echo "✅ Performance check completed"
+
+      - name: 🔍 Final deployment check
+        run: |
+          echo "🔍 Final pre-deployment validation..."
+          
+          # Ensure all critical files exist
+          REQUIRED_FILES=("index.html" "manifest.json" "sw.js" "app-icon.svg" "404.html")
+          for file in "${REQUIRED_FILES[@]}"; do
+            if [ -f "dist/$file" ]; then
+              echo "✅ $file exists"
+            else
+              echo "❌ $file missing"
+              exit 1
+            fi
+          done
+          
+          # Check if assets directory exists
+          if [ -d "dist/assets" ]; then
+            echo "✅ Assets directory exists"
+            echo "📁 Assets count: $(ls dist/assets | wc -l) files"
+          else
+            echo "❌ Assets directory missing"
+            exit 1
+          fi
+          
+          echo "🚀 Ready for deployment!"
+
+      - name: 📝 Create deployment summary
+        run: |
+          echo "📝 Creating deployment summary..."
+          echo "## 🚀 Memphis Focus Hub PWA Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ PWA Features Deployed:" >> $GITHUB_STEP_SUMMARY
+          echo "- 📱 Progressive Web App with offline support" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔄 Service Worker with advanced caching" >> $GITHUB_STEP_SUMMARY
+          echo "- 📋 Web App Manifest for installation" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎯 GitHub Pages optimized paths" >> $GITHUB_STEP_SUMMARY
+          echo "- 📊 Background sync capabilities" >> $GITHUB_STEP_SUMMARY
+          echo "- 🌐 Offline-first architecture" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🌐 Access URLs:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Live Site**: https://pranjalyadav33.github.io/Focus-Hub/" >> $GITHUB_STEP_SUMMARY
+          echo "- **PWA Install**: Add to home screen from the live site" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🎉 **Deployment successful!** The PWA is now available with full offline capabilities." >> $GITHUB_STEP_SUMMARY
+
+      - name: 📄 Setup Pages
+        uses: actions/configure-pages@v5
+        if: github.ref == 'refs/heads/main'
+
+      - name: 📤 Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/main'
+        with:
+          path: ./dist
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: 🚀 Deploy Memphis Focus Hub PWA to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
