@@ -1,0 +1,51 @@
+{
+  "name": "memphis-focus-hub",
+  "private": false,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "A retro-inspired productivity app combining a to-do list and focus timer, styled with the vibrant Memphis design aesthetic.",
+  "author": "Memphis Focus Hub Team",
+  "license": "MIT",
+  "keywords": [
+    "productivity",
+    "focus-timer",
+    "pomodoro",
+    "todo-list",
+    "memphis-design",
+    "react",
+    "typescript",
+    "vite"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PrnjalYadav33/Focus-Hub.git"
+  },
+  "homepage": "https://pranjalyadav33.github.io/Focus-Hub/",
+  "scripts": {
+    "dev": "node scripts/generate-manifest.js && node scripts/generate-sw.js && npx vite",
+    "build": "npx cross-env NODE_ENV=production node scripts/generate-manifest.js && npx cross-env NODE_ENV=production node scripts/generate-sw.js && npx vite build",
+    "build:dev": "node scripts/generate-manifest.js && node scripts/generate-sw.js && npx vite build",
+    "preview": "npx vite preview",
+    "predeploy": "npm run build",
+    "deploy": "npx gh-pages -d dist",
+    "generate-pwa": "node scripts/generate-manifest.js && node scripts/generate-sw.js",
+    "generate-pwa:prod": "npx cross-env NODE_ENV=production node scripts/generate-manifest.js && npx cross-env NODE_ENV=production node scripts/generate-sw.js",
+    "generate-icons": "node scripts/generate-icons.js"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.6.3",
+    "recharts": "^3.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "cross-env": "^7.0.3",
+    "gh-pages": "^6.1.1",
+    "typescript": "~5.7.2",
+    "vite": "^6.2.0"
+  }
+}

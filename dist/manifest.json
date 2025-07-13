@@ -1,0 +1,106 @@
+{
+  "name": "Memphis Focus Hub",
+  "short_name": "Focus Hub",
+  "description": "A retro-inspired productivity app combining a to-do list and focus timer with vibrant Memphis design aesthetic",
+  "start_url": "/Focus-Hub/",
+  "display": "standalone",
+  "background_color": "#FFE66D",
+  "theme_color": "#4ECDC4",
+  "orientation": "portrait-primary",
+  "scope": "/Focus-Hub/",
+  "lang": "en",
+  "categories": ["productivity", "lifestyle", "utilities"],
+  "icons": [
+    {
+      "src": "/Focus-Hub/app-icon.svg",
+      "sizes": "72x72",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/Focus-Hub/app-icon.svg",
+      "sizes": "96x96",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/Focus-Hub/app-icon.svg",
+      "sizes": "128x128",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/Focus-Hub/app-icon.svg",
+      "sizes": "144x144",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/Focus-Hub/app-icon.svg",
+      "sizes": "152x152",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/Focus-Hub/app-icon.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/Focus-Hub/app-icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Focus Timer",
+      "short_name": "Focus",
+      "description": "Start a focus session",
+      "url": "/Focus-Hub/focus",
+      "icons": [
+        {
+          "src": "/Focus-Hub/app-icon.svg",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "To-Do List",
+      "short_name": "Tasks",
+      "description": "Manage your tasks",
+      "url": "/Focus-Hub/todo",
+      "icons": [
+        {
+          "src": "/Focus-Hub/app-icon.svg",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/Focus-Hub/dashboard.jpeg",
+      "sizes": "1024x768",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "Dashboard view showing focus goals and statistics"
+    },
+    {
+      "src": "/Focus-Hub/to%20do%20page.jpeg",
+      "sizes": "1024x768",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "To-Do list for task management"
+    },
+    {
+      "src": "/Focus-Hub/focus-screen.jpeg",
+      "sizes": "1024x768",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "Focus timer for productivity sessions"
+    }
+  ]
+}

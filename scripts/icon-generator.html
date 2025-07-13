@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Icon Generator</title>
+</head>
+<body>
+    <div id="icons"></div>
+    <script>
+        const svgContent = `<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Memphis-style gradient background -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4ECDC4;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#FFE66D;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FF6B9D;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Shadow filter -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="4" dy="4" stdDeviation="3" flood-color="#2E294E" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="512" height="512" rx="80" fill="url(#bgGradient)"/>
+  
+  <!-- Memphis geometric shapes -->
+  <!-- Top left circle -->
+  <circle cx="120" cy="120" r="40" fill="#95E1D3" opacity="0.8"/>
+  
+  <!-- Top right square -->
+  <rect x="380" y="80" width="60" height="60" fill="#F38BA8" opacity="0.8" transform="rotate(15 410 110)"/>
+  
+  <!-- Bottom left triangle -->
+  <polygon points="80,400 140,400 110,340" fill="#95E1D3" opacity="0.6"/>
+  
+  <!-- Bottom right circle -->
+  <circle cx="420" cy="420" r="25" fill="#F38BA8" opacity="0.7"/>
+  
+  <!-- Main focus symbol - outer circle -->
+  <circle cx="256" cy="256" r="120" fill="none" stroke="#2E294E" stroke-width="8" filter="url(#shadow)"/>
+  
+  <!-- Middle circle -->
+  <circle cx="256" cy="256" r="80" fill="none" stroke="#2E294E" stroke-width="6"/>
+  
+  <!-- Inner circle -->
+  <circle cx="256" cy="256" r="40" fill="none" stroke="#2E294E" stroke-width="4"/>
+  
+  <!-- Center dot -->
+  <circle cx="256" cy="256" r="12" fill="#2E294E"/>
+  
+  <!-- Timer hand pointing to 12 o'clock -->
+  <line x1="256" y1="256" x2="256" y2="180" stroke="#2E294E" stroke-width="6" stroke-linecap="round"/>
+  
+  <!-- Timer hand pointing to 3 o'clock -->
+  <line x1="256" y1="256" x2="320" y2="256" stroke="#2E294E" stroke-width="4" stroke-linecap="round"/>
+  
+  <!-- Decorative dots around the main circle -->
+  <circle cx="256" cy="120" r="6" fill="#2E294E"/>
+  <circle cx="392" cy="256" r="6" fill="#2E294E"/>
+  <circle cx="256" cy="392" r="6" fill="#2E294E"/>
+  <circle cx="120" cy="256" r="6" fill="#2E294E"/>
+  
+  <!-- Memphis-style zigzag decoration -->
+  <path d="M 50 50 L 70 30 L 90 50 L 110 30" fill="none" stroke="#2E294E" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 420 460 L 440 440 L 460 460 L 480 440" fill="none" stroke="#2E294E" stroke-width="3" stroke-linecap="round"/>
+</svg>
+`;
+        const sizes = [72,96,128,144,152,192,384,512];
+        const iconsDiv = document.getElementById('icons');
+        
+        sizes.forEach(size => {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            const svgBlob = new Blob([svgContent], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(svgBlob);
+            
+            img.onload = function() {
+                ctx.drawImage(img, 0, 0, size, size);
+                URL.revokeObjectURL(url);
+                
+                // Convert to blob and create download
+                canvas.toBlob(function(blob) {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = size === 512 ? 'icon.png' : `icon-${size}x${size}.png`;
+                    link.textContent = `Download ${size}x${size}`;
+                    link.style.display = 'block';
+                    link.style.margin = '10px';
+                    iconsDiv.appendChild(link);
+                    
+                    // Auto-click to download
+                    setTimeout(() => link.click(), 100);
+                });
+            };
+            
+            img.src = url;
+        });
+    </script>
+</body>
+</html>
