@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PWA Icon Generator</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        canvas { border: 1px solid #ccc; margin: 10px; }
+        .icon-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+        .icon-item { text-align: center; }
+    </style>
+</head>
+<body>
+    <h1>Memphis Focus Hub - PWA Icon Generator</h1>
+    <p>This will generate all required PWA icons. Right-click each canvas and "Save image as..."</p>
+    
+    <div class="icon-grid" id="iconGrid"></div>
+
+    <script>
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        const iconGrid = document.getElementById('iconGrid');
+
+        sizes.forEach(size => {
+            // Create container
+            const container = document.createElement('div');
+            container.className = 'icon-item';
+            
+            // Create canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            canvas.style.width = Math.min(size, 128) + 'px';
+            canvas.style.height = Math.min(size, 128) + 'px';
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Memphis-style background
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#4ECDC4'); // electric-blue
+            gradient.addColorStop(0.5, '#FFE66D'); // sunny-yellow
+            gradient.addColorStop(1, '#FF6B9D'); // hot-pink
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+            
+            // Add geometric shapes (Memphis style)
+            ctx.fillStyle = '#95E1D3'; // lime-green
+            ctx.beginPath();
+            ctx.arc(size * 0.2, size * 0.2, size * 0.1, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            ctx.fillStyle = '#F38BA8'; // coral
+            ctx.fillRect(size * 0.7, size * 0.1, size * 0.2, size * 0.2);
+            
+            // Add focus symbol (target/timer)
+            ctx.strokeStyle = '#2E294E'; // deep-space
+            ctx.lineWidth = size * 0.02;
+            ctx.beginPath();
+            ctx.arc(size * 0.5, size * 0.5, size * 0.25, 0, 2 * Math.PI);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.arc(size * 0.5, size * 0.5, size * 0.15, 0, 2 * Math.PI);
+            ctx.stroke();
+            
+            // Center dot
+            ctx.fillStyle = '#2E294E';
+            ctx.beginPath();
+            ctx.arc(size * 0.5, size * 0.5, size * 0.05, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Add timer lines
+            ctx.strokeStyle = '#2E294E';
+            ctx.lineWidth = size * 0.015;
+            ctx.beginPath();
+            ctx.moveTo(size * 0.5, size * 0.3);
+            ctx.lineTo(size * 0.5, size * 0.5);
+            ctx.lineTo(size * 0.65, size * 0.5);
+            ctx.stroke();
+            
+            // Create label
+            const label = document.createElement('p');
+            label.textContent = `${size}x${size}`;
+            label.style.margin = '5px 0';
+            label.style.fontSize = '12px';
+            
+            // Create download link
+            const link = document.createElement('a');
+            link.textContent = 'Download';
+            link.href = canvas.toDataURL('image/png');
+            link.download = `icon-${size}x${size}.png`;
+            link.style.fontSize = '12px';
+            link.style.color = '#4ECDC4';
+            
+            container.appendChild(canvas);
+            container.appendChild(label);
+            container.appendChild(link);
+            iconGrid.appendChild(container);
+        });
+
+        // Instructions
+        const instructions = document.createElement('div');
+        instructions.innerHTML = `
+            <h3>Instructions:</h3>
+            <ol>
+                <li>Right-click each canvas above and select "Save image as..."</li>
+                <li>Save each icon with the filename shown (e.g., icon-192x192.png)</li>
+                <li>Create a folder called "icons" in your public directory</li>
+                <li>Place all downloaded icons in the public/icons/ folder</li>
+            </ol>
+            <p><strong>Note:</strong> You can also click the "Download" links below each icon.</p>
+        `;
+        instructions.style.marginTop = '30px';
+        instructions.style.padding = '20px';
+        instructions.style.backgroundColor = '#f5f5f5';
+        instructions.style.borderRadius = '8px';
+        document.body.appendChild(instructions);
+    </script>
+</body>
+</html>

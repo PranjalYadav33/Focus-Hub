@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Convert SVG to PNG Icon</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        canvas { 
+            border: 2px solid #ddd; 
+            margin: 10px; 
+            border-radius: 8px;
+        }
+        .icon-grid { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 20px; 
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .icon-item { 
+            text-align: center; 
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        .download-btn {
+            background: #4ECDC4;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .download-btn:hover {
+            background: #45b7aa;
+        }
+        h1 {
+            color: #2E294E;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Memphis Focus Hub - Icon Converter</h1>
+        <p class="subtitle">Converting SVG to PNG icons for your PWA</p>
+        
+        <div class="icon-grid" id="iconGrid"></div>
+        
+        <div style="margin-top: 30px; padding: 20px; background: #e8f4f8; border-radius: 8px;">
+            <h3>📋 Instructions:</h3>
+            <ol>
+                <li>Click the "Download" button for each icon size you need</li>
+                <li>Create a folder called <code>public/icons/</code> in your project</li>
+                <li>Save the downloaded files with the exact names shown</li>
+                <li>The main app icon (512x512) should also be saved as <code>public/icon.png</code></li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        const svgContent = `<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#4ECDC4;stop-opacity:1" />
+                    <stop offset="50%" style="stop-color:#FFE66D;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#FF6B9D;stop-opacity:1" />
+                </linearGradient>
+                <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="4" dy="4" stdDeviation="3" flood-color="#2E294E" flood-opacity="0.3"/>
+                </filter>
+            </defs>
+            <rect width="512" height="512" rx="80" fill="url(#bgGradient)"/>
+            <circle cx="120" cy="120" r="40" fill="#95E1D3" opacity="0.8"/>
+            <rect x="380" y="80" width="60" height="60" fill="#F38BA8" opacity="0.8" transform="rotate(15 410 110)"/>
+            <polygon points="80,400 140,400 110,340" fill="#95E1D3" opacity="0.6"/>
+            <circle cx="420" cy="420" r="25" fill="#F38BA8" opacity="0.7"/>
+            <circle cx="256" cy="256" r="120" fill="none" stroke="#2E294E" stroke-width="8" filter="url(#shadow)"/>
+            <circle cx="256" cy="256" r="80" fill="none" stroke="#2E294E" stroke-width="6"/>
+            <circle cx="256" cy="256" r="40" fill="none" stroke="#2E294E" stroke-width="4"/>
+            <circle cx="256" cy="256" r="12" fill="#2E294E"/>
+            <line x1="256" y1="256" x2="256" y2="180" stroke="#2E294E" stroke-width="6" stroke-linecap="round"/>
+            <line x1="256" y1="256" x2="320" y2="256" stroke="#2E294E" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="256" cy="120" r="6" fill="#2E294E"/>
+            <circle cx="392" cy="256" r="6" fill="#2E294E"/>
+            <circle cx="256" cy="392" r="6" fill="#2E294E"/>
+            <circle cx="120" cy="256" r="6" fill="#2E294E"/>
+            <path d="M 50 50 L 70 30 L 90 50 L 110 30" fill="none" stroke="#2E294E" stroke-width="3" stroke-linecap="round"/>
+            <path d="M 420 460 L 440 440 L 460 460 L 480 440" fill="none" stroke="#2E294E" stroke-width="3" stroke-linecap="round"/>
+        </svg>`;
+
+        const sizes = [
+            { size: 512, name: 'icon.png', desc: 'Main App Icon' },
+            { size: 192, name: 'icon-192x192.png', desc: 'Android Chrome' },
+            { size: 180, name: 'apple-touch-icon.png', desc: 'Apple Touch' },
+            { size: 152, name: 'icon-152x152.png', desc: 'iPad' },
+            { size: 144, name: 'icon-144x144.png', desc: 'Windows Tile' },
+            { size: 128, name: 'icon-128x128.png', desc: 'Chrome Web Store' },
+            { size: 96, name: 'icon-96x96.png', desc: 'Android' },
+            { size: 72, name: 'icon-72x72.png', desc: 'Android LDPI' }
+        ];
+
+        const iconGrid = document.getElementById('iconGrid');
+
+        function createIcon(size, filename, description) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            canvas.style.width = Math.min(size, 128) + 'px';
+            canvas.style.height = Math.min(size, 128) + 'px';
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Create image from SVG
+            const img = new Image();
+            const svgBlob = new Blob([svgContent], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(svgBlob);
+            
+            img.onload = function() {
+                ctx.drawImage(img, 0, 0, size, size);
+                URL.revokeObjectURL(url);
+                
+                // Create download link
+                canvas.toBlob(function(blob) {
+                    const link = container.querySelector('.download-btn');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = filename;
+                });
+            };
+            
+            img.src = url;
+            
+            // Create container
+            const container = document.createElement('div');
+            container.className = 'icon-item';
+            
+            const label = document.createElement('p');
+            label.innerHTML = `<strong>${size}×${size}</strong><br>${description}`;
+            label.style.margin = '0 0 10px 0';
+            label.style.fontSize = '14px';
+            
+            const filenameLabel = document.createElement('p');
+            filenameLabel.textContent = filename;
+            filenameLabel.style.margin = '5px 0';
+            filenameLabel.style.fontSize = '12px';
+            filenameLabel.style.color = '#666';
+            filenameLabel.style.fontFamily = 'monospace';
+            
+            const downloadBtn = document.createElement('a');
+            downloadBtn.className = 'download-btn';
+            downloadBtn.textContent = 'Download';
+            downloadBtn.href = '#';
+            downloadBtn.download = filename;
+            
+            container.appendChild(canvas);
+            container.appendChild(label);
+            container.appendChild(filenameLabel);
+            container.appendChild(downloadBtn);
+            
+            return container;
+        }
+
+        // Generate all icon sizes
+        sizes.forEach(({ size, name, desc }) => {
+            const iconContainer = createIcon(size, name, desc);
+            iconGrid.appendChild(iconContainer);
+        });
+    </script>
+</body>
+</html>
