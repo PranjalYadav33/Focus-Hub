@@ -1,248 +1,279 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useData } from '../context/DataContext';
 import AnimatedContainer from '@/components/AnimatedContainer';
 import * as timer from '@/utils/timer';
-import { APP_CONFIG } from '@/utils/constants';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Pause, Play, RotateCcw, Settings } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
-// derive initial view state from centralized timer state
-defineInitial();
-function defineInitial() { /* kept for history; logic moved to utils/timer */ }
+// Initialize from centralized timer state
+const s0 = timer.readState();
+const r0 = timer.computeRemaining(s0);
 
 const FocusPage: React.FC = () => {
-    const { addSession, getTodayGoal, setGoal } = useData();
+  const { addSession, getTodayGoal, setGoal } = useData();
 
-    // Initialize from centralized timer state
-    const s0 = timer.readState();
-    const r0 = timer.computeRemaining(s0);
-    const [duration, setDuration] = useState<number>(Math.floor(s0.durationSec / 60));
-    const [timeLeft, setTimeLeft] = useState<number>(r0.remainingSec);
-    const [isActive, setIsActive] = useState<boolean>(r0.status === 'running');
-    const [isPaused, setIsPaused] = useState<boolean>(s0.status === 'paused');
-    const [sessionStartTime, setSessionStartTime] = useState<number | null>(s0.sessionStartMs);
-    
-    const today = new Date().toISOString().split('T')[0];
-    const dailyGoal = getTodayGoal()?.targetMinutes || 60;
+  const [duration, setDuration] = useState<number>(
+    Math.floor(s0.durationSec / 60)
+  );
+  const [timeLeft, setTimeLeft] = useState<number>(r0.remainingSec);
+  const [isActive, setIsActive] = useState<boolean>(r0.status === 'running');
+  const [isPaused, setIsPaused] = useState<boolean>(s0.status === 'paused');
+  const [sessionStartTime, setSessionStartTime] = useState<number | null>(
+    s0.sessionStartMs
+  );
 
-    const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const today = new Date().toISOString().split('T')[0];
+  const dailyGoal = getTodayGoal()?.targetMinutes || 60;
 
-    const formatTime = (seconds: number): string => {
-        const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
-        const secs = (seconds % 60).toString().padStart(2, '0');
-        return `${mins}:${secs}`;
-    };
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Save timer state to localStorage
-    const saveTimerState = useCallback(() => {
-        const timerState = {
-            duration,
-            timeLeft,
-            isActive,
-            isPaused,
-            sessionStartTime,
-            lastUpdateTime: Date.now()
-        };
-        localStorage.setItem('memphis_timer_state', JSON.stringify(timerState));
-    }, [duration, timeLeft, isActive, isPaused, sessionStartTime]);
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60)
+      .toString()
+      .padStart(2, '0');
+    const secs = (seconds % 60).toString().padStart(2, '0');
+    return `${mins}:${secs}`;
+  };
 
-
-
-    const resetTimer = useCallback(() => {
-        // Clear the interval when resetting
-        if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-            intervalRef.current = null;
-        }
-        setIsActive(false);
-        setIsPaused(false);
-        setTimeLeft(duration * 60);
-        setSessionStartTime(null);
-        // Clear saved state
-        localStorage.removeItem('memphis_timer_state');
-    }, [duration]);
-
-    // If a completion event is present (from background progress), consume it and record a session
-    useEffect(() => {
-        const ev = timer.consumeCompletion();
-        if (ev) {
-            addSession({ startTime: ev.startTimeIso, duration: ev.durationSec, completed: ev.completed });
-        }
-        // Subscribe to store changes (cross-tab) to keep view state live
-        const unsub = timer.onStoreChange((s, ev2) => {
-            const r = timer.computeRemaining(s);
-            setDuration(Math.floor(s.durationSec / 60));
-            setTimeLeft(r.remainingSec);
-            setIsActive(r.status === 'running');
-            setIsPaused(s.status === 'paused');
-            setSessionStartTime(s.sessionStartMs);
-            if (ev2) addSession({ startTime: ev2.startTimeIso, duration: ev2.durationSec, completed: ev2.completed });
-        });
-        return () => unsub();
-    }, [addSession]);
-
-    useEffect(() => {
-        // Only reset timer if it's not currently active
-        if (!isActive && !isPaused) {
-            setTimeLeft(duration * 60);
-            timer.setDurationSec(duration * 60);
-        } else {
-            timer.setDurationSec(duration * 60);
-        }
-    }, [duration, isActive, isPaused]);
-
-    useEffect(() => {
-        // Clear any existing interval
-        if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-            intervalRef.current = null;
-        }
-        if (isActive && !isPaused) {
-            intervalRef.current = setInterval(() => {
-                const s = timer.readState();
-                const r = timer.computeRemaining(s);
-                setTimeLeft(r.remainingSec);
-                if (r.remainingSec <= 0) {
-                    const ev = timer.consumeCompletion();
-                    if (ev) addSession({ startTime: ev.startTimeIso, duration: ev.durationSec, completed: ev.completed });
-                    clearInterval(intervalRef.current!);
-                    intervalRef.current = null;
-                    setIsActive(false);
-                    setIsPaused(false);
-                }
-            }, 1000);
-        }
-        return () => {
-            if (intervalRef.current) {
-                clearInterval(intervalRef.current);
-                intervalRef.current = null;
-            }
-        };
-    }, [isActive, isPaused, addSession]);
-
-    // Local view state now derives from centralized timer; no manual save effects required
-
-    const handleStart = () => {
-        const s = timer.start(duration * 60);
-        const r = timer.computeRemaining(s);
-        setSessionStartTime(s.sessionStartMs);
-        setIsActive(r.status === 'running');
-        setIsPaused(false);
-        setTimeLeft(r.remainingSec);
-    };
-
-    const handlePauseResume = () => {
-        if (isPaused) {
-            const s = timer.resume();
-            const r = timer.computeRemaining(s);
-            setIsPaused(false);
-            setIsActive(r.status === 'running');
-            setTimeLeft(r.remainingSec);
-        } else {
-            const s = timer.pause();
-            const r = timer.computeRemaining(s);
-            setIsPaused(true);
-            setIsActive(r.status === 'running');
-            setTimeLeft(r.remainingSec);
-        }
-    };
-
-    const handleReset = () => {
-        const s = timer.reset(true);
-        const r = timer.computeRemaining(s);
-        setIsActive(false);
-        setIsPaused(false);
-        setTimeLeft(r.remainingSec);
-        setSessionStartTime(null);
-        // Consume any partial-event emitted by reset and record it
-        const ev = timer.consumeCompletion();
-        if (ev) addSession({ startTime: ev.startTimeIso, duration: ev.durationSec, completed: ev.completed });
-        // Stop any local interval
-        if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+  // If a completion event is present, consume it and record a session
+  useEffect(() => {
+    const ev = timer.consumeCompletion();
+    if (ev) {
+      addSession({
+        startTime: ev.startTimeIso,
+        duration: ev.durationSec,
+        completed: ev.completed,
+      });
     }
-    
-    const handleSetGoal = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newGoal = parseInt(e.target.value, 10);
-        if(!isNaN(newGoal) && newGoal > 0){
-             setGoal({ date: today, targetMinutes: newGoal });
+    // Subscribe to store changes (cross-tab)
+    const unsub = timer.onStoreChange((s, ev2) => {
+      const r = timer.computeRemaining(s);
+      setDuration(Math.floor(s.durationSec / 60));
+      setTimeLeft(r.remainingSec);
+      setIsActive(r.status === 'running');
+      setIsPaused(s.status === 'paused');
+      setSessionStartTime(s.sessionStartMs);
+      if (ev2)
+        addSession({
+          startTime: ev2.startTimeIso,
+          duration: ev2.durationSec,
+          completed: ev2.completed,
+        });
+    });
+    return () => unsub();
+  }, [addSession]);
+
+  useEffect(() => {
+    if (!isActive && !isPaused) {
+      setTimeLeft(duration * 60);
+      timer.setDurationSec(duration * 60);
+    }
+  }, [duration, isActive, isPaused]);
+
+  useEffect(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (isActive && !isPaused) {
+      intervalRef.current = setInterval(() => {
+        const s = timer.readState();
+        const r = timer.computeRemaining(s);
+        setTimeLeft(r.remainingSec);
+        if (r.remainingSec <= 0) {
+          const ev = timer.consumeCompletion();
+          if (ev)
+            addSession({
+              startTime: ev.startTimeIso,
+              duration: ev.durationSec,
+              completed: ev.completed,
+            });
+          if (intervalRef.current) clearInterval(intervalRef.current);
+          setIsActive(false);
+          setIsPaused(false);
         }
+      }, 1000);
+    }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
-    
-    const progress = ((duration * 60 - timeLeft) / (duration * 60)) * 100;
-    
-    return (
-        <AnimatedContainer className="flex flex-col items-center justify-center h-full space-y-8">
-            <h1 className="text-4xl font-bold tracking-tight">Focus</h1>
-            <p className="text-sm text-muted-foreground">Stay in the zone</p>
+  }, [isActive, isPaused, addSession]);
 
-            <div className="relative w-80 h-80 flex items-center justify-center bg-card/60 backdrop-blur rounded-2xl border">
-                 <svg className="absolute w-full h-full" viewBox="0 0 100 100">
-                    <circle className="text-gray-200" strokeWidth="8" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" />
-                    <circle
-                        className="text-primary"
-                        strokeWidth="8"
-                        strokeDasharray={2 * Math.PI * 45}
-                        strokeDashoffset={2 * Math.PI * 45 * (1 - progress / 100)}
-                        strokeLinecap="round"
-                        stroke="currentColor"
-                        fill="transparent"
-                        r="45"
-                        cx="50"
-                        cy="50"
-                        style={{transform: 'rotate(-90deg)', transformOrigin: '50% 50%', transition: 'stroke-dashoffset 1s linear'}}
-                    />
-                </svg>
-                <div className="z-10 text-center select-none">
-                    <p className="font-semibold text-6xl tracking-tight text-foreground">{formatTime(timeLeft)}</p>
-                    <p className="text-muted-foreground">Time to focus</p>
-                </div>
+  const handleStart = () => {
+    const s = timer.start(duration * 60);
+    const r = timer.computeRemaining(s);
+    setSessionStartTime(s.sessionStartMs);
+    setIsActive(r.status === 'running');
+    setIsPaused(false);
+    setTimeLeft(r.remainingSec);
+  };
+
+  const handlePauseResume = () => {
+    const s = isPaused ? timer.resume() : timer.pause();
+    const r = timer.computeRemaining(s);
+    setIsPaused(s.status === 'paused');
+    setIsActive(r.status === 'running');
+    setTimeLeft(r.remainingSec);
+  };
+
+  const handleReset = () => {
+    const s = timer.reset(true);
+    const r = timer.computeRemaining(s);
+    setIsActive(false);
+    setIsPaused(false);
+    setTimeLeft(r.remainingSec);
+    setSessionStartTime(null);
+    const ev = timer.consumeCompletion();
+    if (ev)
+      addSession({
+        startTime: ev.startTimeIso,
+        duration: ev.durationSec,
+        completed: ev.completed,
+      });
+    if (intervalRef.current) clearInterval(intervalRef.current);
+  };
+
+  const handleSetGoal = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newGoal = parseInt(e.target.value, 10);
+    if (!isNaN(newGoal) && newGoal > 0) {
+      setGoal({ date: today, targetMinutes: newGoal });
+    }
+  };
+
+  const progress =
+    duration > 0 ? ((duration * 60 - timeLeft) / (duration * 60)) * 360 : 0;
+
+  return (
+    <AnimatedContainer className="flex flex-col items-center justify-center h-full space-y-8 p-4">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold tracking-tight">Focus Session</h1>
+        <p className="text-muted-foreground">
+          {isActive
+            ? "You're in the zone. Keep it up!"
+            : 'Ready to start a new session?'}
+        </p>
+      </div>
+
+      <div className="relative w-80 h-80 flex items-center justify-center">
+        <div
+          className="absolute inset-0 rounded-full bg-muted transition-all duration-500"
+          style={{
+            transform: `scale(${isActive && !isPaused ? 1.05 : 1})`,
+          }}
+        ></div>
+        <div
+          className="absolute inset-0 rounded-full border-[16px] border-primary/10"
+        ></div>
+        <div
+          className="absolute inset-0"
+          style={{
+            transform: 'rotate(-90deg)',
+            background: `conic-gradient(hsl(var(--primary)) ${progress}deg, transparent ${progress}deg)`,
+            borderRadius: '50%',
+            transition: 'background 1s linear',
+          }}
+        ></div>
+        <div className="absolute inset-8 rounded-full bg-background"></div>
+
+        <div className="z-10 text-center select-none">
+          <p className="font-mono text-7xl font-bold tracking-tighter text-foreground">
+            {formatTime(timeLeft)}
+          </p>
+          <p className="text-muted-foreground uppercase tracking-widest text-sm">
+            Time to Focus
+          </p>
+        </div>
+      </div>
+
+      <div className="flex w-full max-w-sm justify-center gap-4">
+        {!isActive ? (
+          <Button
+            onClick={handleStart}
+            size="lg"
+            className="w-full h-16 text-2xl"
+          >
+            <Play className="h-8 w-8 mr-4" />
+            Start
+          </Button>
+        ) : (
+          <>
+            <Button
+              onClick={handlePauseResume}
+              size="lg"
+              variant="secondary"
+              className="w-full h-16 text-2xl"
+            >
+              {isPaused ? (
+                <Play className="h-8 w-8 mr-4" />
+              ) : (
+                <Pause className="h-8 w-8 mr-4" />
+              )}
+              {isPaused ? 'Resume' : 'Pause'}
+            </Button>
+            <Button
+              onClick={handleReset}
+              size="lg"
+              variant="destructive"
+              className="h-16"
+            >
+              <RotateCcw className="h-8 w-8" />
+            </Button>
+          </>
+        )}
+      </div>
+
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button variant="outline" className="absolute top-6 right-6">
+            <Settings className="h-4 w-4 mr-2" />
+            Settings
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Focus Settings</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-6 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Session Duration (minutes)
+              </label>
+              <div className="flex justify-center items-center gap-2">
+                {[15, 25, 50].map(d => (
+                  <Button
+                    key={d}
+                    onClick={() => setDuration(d)}
+                    variant={duration === d ? 'default' : 'outline'}
+                    disabled={isActive}
+                  >
+                    {d} min
+                  </Button>
+                ))}
+              </div>
             </div>
-
-            <div className="w-full max-w-md rounded-2xl border bg-card p-6 shadow-sm">
-                <div className="flex justify-center items-center gap-2 mb-6">
-                    <label className="text-sm text-muted-foreground">Duration</label>
-                    {[15, 25, 50].map(d => (
-                        <button key={d} onClick={() => setDuration(d)} className={`px-3 py-1.5 text-sm font-medium rounded-md border transition ${duration === d ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`}>
-                            {d} min
-                        </button>
-                    ))}
-                </div>
-
-                <div className="flex justify-center gap-4">
-                    {!isActive ? (
-                        <>
-                            <button onClick={handleStart} className="w-48 rounded-md bg-primary text-primary-foreground px-6 py-3 text-lg font-semibold shadow-sm transition-colors hover:bg-primary/90">Start</button>
-                            {timeLeft !== duration * 60 && (
-                                <button onClick={handleReset} className="rounded-md bg-destructive text-destructive-foreground px-4 py-3 text-base font-semibold shadow-sm transition-colors hover:bg-destructive/90">
-                                    Reset
-                                </button>
-                            )}
-                        </>
-                    ) : (
-                        <>
-                            <button onClick={handlePauseResume} className="w-48 rounded-md bg-secondary text-secondary-foreground px-6 py-3 text-lg font-semibold shadow-sm transition-colors hover:bg-secondary/80">
-                                {isPaused ? 'Resume' : 'Pause'}
-                            </button>
-                            <button onClick={handleReset} className="rounded-md bg-destructive text-destructive-foreground px-6 py-3 text-lg font-semibold shadow-sm transition-colors hover:bg-destructive/90">
-                                Reset
-                            </button>
-                        </>
-                    )}
-                </div>
+            <div className="space-y-2">
+              <label htmlFor="daily-goal" className="text-sm font-medium">
+                Daily Goal (minutes)
+              </label>
+              <Input
+                id="daily-goal"
+                type="number"
+                value={dailyGoal}
+                onChange={handleSetGoal}
+              />
             </div>
-
-            <div className="w-full max-w-md rounded-2xl border bg-card p-4 shadow-sm">
-                <label htmlFor="daily-goal" className="text-sm font-medium">Daily Goal (minutes)</label>
-                <input
-                    id="daily-goal"
-                    type="number"
-                    value={dailyGoal}
-                    onChange={handleSetGoal}
-                    className="w-full mt-2 px-3 py-2 rounded-md border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-                />
-            </div>
-
-        </AnimatedContainer>
-    );
+          </div>
+        </DialogContent>
+      </Dialog>
+    </AnimatedContainer>
+  );
 };
 
 export default FocusPage;
