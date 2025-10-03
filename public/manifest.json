@@ -2,12 +2,12 @@
   "name": "Focus Hub",
   "short_name": "Focus Hub",
   "description": "A refined productivity app combining a to-do list and focus timer with premium, minimal design.",
-  "start_url": "/",
+  "start_url": "/Focus-Hub/",
   "display": "standalone",
   "background_color": "#0b1220",
   "theme_color": "#4F46E5",
   "orientation": "portrait-primary",
-  "scope": "/",
+  "scope": "/Focus-Hub/",
   "lang": "en",
   "categories": [
     "productivity",
@@ -16,43 +16,43 @@
   ],
   "icons": [
     {
-      "src": "/app-icon.svg",
+      "src": "/Focus-Hub/app-icon.svg",
       "sizes": "72x72",
       "type": "image/svg+xml",
       "purpose": "maskable any"
     },
     {
-      "src": "/app-icon.svg",
+      "src": "/Focus-Hub/app-icon.svg",
       "sizes": "96x96",
       "type": "image/svg+xml",
       "purpose": "maskable any"
     },
     {
-      "src": "/app-icon.svg",
+      "src": "/Focus-Hub/app-icon.svg",
       "sizes": "128x128",
       "type": "image/svg+xml",
       "purpose": "maskable any"
     },
     {
-      "src": "/app-icon.svg",
+      "src": "/Focus-Hub/app-icon.svg",
       "sizes": "144x144",
       "type": "image/svg+xml",
       "purpose": "maskable any"
     },
     {
-      "src": "/app-icon.svg",
+      "src": "/Focus-Hub/app-icon.svg",
       "sizes": "152x152",
       "type": "image/svg+xml",
       "purpose": "maskable any"
     },
     {
-      "src": "/app-icon.svg",
+      "src": "/Focus-Hub/app-icon.svg",
       "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "maskable any"
     },
     {
-      "src": "/app-icon.svg",
+      "src": "/Focus-Hub/app-icon.svg",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "maskable any"
@@ -63,10 +63,10 @@
       "name": "Focus Timer",
       "short_name": "Focus",
       "description": "Start a focus session",
-      "url": "/focus",
+      "url": "/Focus-Hub/focus",
       "icons": [
         {
-          "src": "/app-icon.svg",
+          "src": "/Focus-Hub/app-icon.svg",
           "sizes": "96x96"
         }
       ]
@@ -75,10 +75,10 @@
       "name": "To-Do List",
       "short_name": "Tasks",
       "description": "Manage your tasks",
-      "url": "/todo",
+      "url": "/Focus-Hub/todo",
       "icons": [
         {
-          "src": "/app-icon.svg",
+          "src": "/Focus-Hub/app-icon.svg",
           "sizes": "96x96"
         }
       ]
@@ -86,21 +86,21 @@
   ],
   "screenshots": [
     {
-      "src": "/dashboard.jpeg",
+      "src": "/Focus-Hub/dashboard.jpeg",
       "sizes": "1024x768",
       "type": "image/jpeg",
       "form_factor": "wide",
       "label": "Dashboard view showing focus goals and statistics"
     },
     {
-      "src": "/to%20do%20page.jpeg",
+      "src": "/Focus-Hub/to%20do%20page.jpeg",
       "sizes": "1024x768",
       "type": "image/jpeg",
       "form_factor": "wide",
       "label": "To-Do list for task management"
     },
     {
-      "src": "/focus-screen.jpeg",
+      "src": "/Focus-Hub/focus-screen.jpeg",
       "sizes": "1024x768",
       "type": "image/jpeg",
       "form_factor": "wide",

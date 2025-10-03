@@ -1,5 +1,5 @@
 const CACHE_NAME = 'focus-hub-v4';
-const BASE_PATH = '';
+const BASE_PATH = '/Focus-Hub';
 const urlsToCache = [
   `${BASE_PATH}/`,
   `${BASE_PATH}/index.html`,

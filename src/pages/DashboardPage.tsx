@@ -1,15 +1,31 @@
-
 import React, { useState, useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import { Link } from 'react-router-dom';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import {
+  RadialBarChart,
+  RadialBar,
+  PolarAngleAxis,
+  ResponsiveContainer,
+  Tooltip,
+} from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
-import { CheckCircle, Clock, Target, Timer, TrendingUp, Calendar } from 'lucide-react';
+import {
+  CheckCircle,
+  Clock,
+  Timer,
+  TrendingUp,
+  Calendar,
+  ListChecks,
+  BrainCircuit,
+  Clock3,
+  Star,
+  Plus,
+} from 'lucide-react';
 import AnimatedContainer from '@/components/AnimatedContainer';
 import { animateStagger } from '@/utils/motion';
-
+import { Separator } from '@/components/ui/separator';
 
 const DashboardPage: React.FC = () => {
   const { tasks, sessions, getTodayGoal } = useData();
@@ -20,21 +36,19 @@ const DashboardPage: React.FC = () => {
 
   const today = new Date().toISOString().split('T')[0];
   const sessionsToday = sessions.filter(s => s.startTime.startsWith(today));
-  const totalMinutesToday = sessionsToday.reduce((acc, s) => acc + s.duration / 60, 0);
+  const totalMinutesToday = sessionsToday.reduce(
+    (acc, s) => acc + s.duration / 60,
+    0
+  );
   const completedSessionsToday = sessionsToday.filter(s => s.completed);
-  // Count ALL focus time toward daily goal (both completed and incomplete sessions)
   const focusMinutesToday = totalMinutesToday;
 
   const todayGoal = getTodayGoal();
   const goalMinutes = todayGoal?.targetMinutes || 60;
 
-  // Add current timer progress to focus minutes for real-time display
   const focusedMinutes = Math.round(focusMinutesToday + currentTimerProgress);
-  const remainingMinutes = Math.max(0, goalMinutes - focusedMinutes);
 
-  // Monitor active timer for real-time updates
   useEffect(() => {
-    // Stagger cards on mount
     animateStagger('#dashboard-cards > *');
 
     const updateTimerProgress = () => {
@@ -43,10 +57,10 @@ const DashboardPage: React.FC = () => {
         if (savedState) {
           const state = JSON.parse(savedState);
           if (state.isActive && !state.isPaused && state.sessionStartTime) {
-            // Calculate how much time has been spent in current session
-            const timeSpent = Math.floor((Date.now() - state.sessionStartTime) / 1000);
-            const minutesSpent = timeSpent / 60;
-            setCurrentTimerProgress(minutesSpent);
+            const timeSpent = Math.floor(
+              (Date.now() - state.sessionStartTime) / 1000
+            );
+            setCurrentTimerProgress(timeSpent / 60);
           } else {
             setCurrentTimerProgress(0);
           }
@@ -58,25 +72,18 @@ const DashboardPage: React.FC = () => {
       }
     };
 
-    // Update immediately
     updateTimerProgress();
-
-    // Update every second for real-time progress
     const interval = setInterval(updateTimerProgress, 1000);
 
     return () => clearInterval(interval);
   }, []);
 
-  // Also update when sessions change (new session completed)
   useEffect(() => {
-    // Only reset current timer progress if there's no active timer
     const checkForNewSessions = () => {
       const savedState = localStorage.getItem('memphis_timer_state');
       if (!savedState) {
-        // No active timer, reset progress
         setCurrentTimerProgress(0);
       } else {
-        // There's still an active timer, keep monitoring
         try {
           const state = JSON.parse(savedState);
           if (!state.isActive || state.isPaused) {
@@ -87,47 +94,46 @@ const DashboardPage: React.FC = () => {
         }
       }
     };
-
     checkForNewSessions();
   }, [sessions]);
 
-  const goalData = [
+  const goalProgress = Math.min(
+    100,
+    Math.round((focusedMinutes / goalMinutes) * 100)
+  );
+
+  const radialChartData = [
     {
-      name: 'Today\'s Goal',
-      focused: focusedMinutes,
-      remaining: remainingMinutes,
-      total: goalMinutes
-    }
+      name: 'Focus Goal',
+      value: goalProgress,
+    },
   ];
 
   return (
-    <AnimatedContainer className="space-y-8">
-      <div className="flex items-center justify-between">
+    <AnimatedContainer className="p-4 sm:p-6 lg:p-8 space-y-8">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">
             Welcome back! Here's your productivity overview.
           </p>
         </div>
-        <div className="flex items-center gap-2 rounded-full border bg-card/60 px-3 py-1 backdrop-blur">
+        <div className="flex items-center gap-2 rounded-full border bg-card/60 px-3 py-1.5 backdrop-blur-sm">
           <Calendar className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">
-            {new Date().toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            })}
+          <span className="text-sm font-medium text-muted-foreground">
+            {new Date().toLocaleDateString('en-US', { dateStyle: 'full' })}
           </span>
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4" id="dashboard-cards">
-        <Card data-testid="stat-card">
+      <div
+        className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
+        id="dashboard-cards"
+      >
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            <ListChecks className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{tasks.length}</div>
@@ -137,29 +143,31 @@ const DashboardPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card data-testid="stat-card">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Sessions Today</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">
+              Sessions Today
+            </CardTitle>
+            <BrainCircuit className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{completedSessionsToday.length}</div>
+            <div className="text-2xl font-bold">
+              {completedSessionsToday.length}
+            </div>
             <p className="text-xs text-muted-foreground">
               Focus sessions completed
             </p>
           </CardContent>
         </Card>
 
-        <Card data-testid="stat-card">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Tasks</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <Clock3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{pendingTasks}</div>
-            <p className="text-xs text-muted-foreground">
-              Tasks remaining
-            </p>
+            <p className="text-xs text-muted-foreground">Tasks remaining</p>
           </CardContent>
         </Card>
 
@@ -169,138 +177,138 @@ const DashboardPage: React.FC = () => {
             <Timer className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {Math.round(focusMinutesToday + currentTimerProgress)}m
-            </div>
+            <div className="text-2xl font-bold">{focusedMinutes}m</div>
             <p className="text-xs text-muted-foreground">
-              {Math.round((focusedMinutes / goalMinutes) * 100)}% of goal
+              {goalProgress}% of {goalMinutes}m goal
             </p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        {/* Focus Goal */}
-        <Card className="lg:col-span-4">
+      <div className="grid gap-8 md:grid-cols-1 lg:grid-cols-5">
+        <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
               Today's Focus Goal
             </CardTitle>
             <CardDescription>
-              Track your daily focus time progress
+              Your daily focus progress. Keep it up!
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="h-64">
+          <CardContent className="flex flex-col items-center justify-center">
+            <div className="relative h-64 w-64">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={goalData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis
-                    dataKey="name"
-                    className="text-xs fill-muted-foreground"
+                <RadialBarChart
+                  innerRadius="80%"
+                  outerRadius="100%"
+                  data={radialChartData}
+                  startAngle={90}
+                  endAngle={-270}
+                  barSize={15}
+                >
+                  <PolarAngleAxis
+                    type="number"
+                    domain={[0, 100]}
+                    angleAxisId={0}
+                    tick={false}
                   />
-                  <YAxis
-                    domain={[0, goalMinutes]}
-                    className="text-xs fill-muted-foreground"
+                  <RadialBar
+                    background={{ fill: 'hsl(var(--muted))' }}
+                    dataKey="value"
+                    angleAxisId={0}
+                    cornerRadius={10}
+                    className="fill-primary"
                   />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: 'hsl(var(--card))',
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                      borderRadius: 'var(--radius)',
                     }}
+                    cursor={{ fill: 'transparent' }}
+                    formatter={(value: number) => [`${value.toFixed(0)}%`, 'Progress']}
                   />
-                  <Bar
-                    dataKey="focused"
-                    stackId="progress"
-                    fill="hsl(var(--primary))"
-                    name="Minutes Completed"
-                    radius={[0, 0, 0, 0]}
-                    className={currentTimerProgress > 0 ? "animate-pulse" : ""}
-                  />
-                  <Bar
-                    dataKey="remaining"
-                    stackId="progress"
-                    fill="hsl(var(--muted))"
-                    name="Minutes Remaining"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
+                </RadialBarChart>
               </ResponsiveContainer>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-5xl font-bold text-primary">
+                  {goalProgress}%
+                </span>
+                <p className="text-muted-foreground text-sm">completed</p>
+              </div>
             </div>
-            <div className="mt-6 space-y-4">
-              <div className="flex justify-between items-center text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-primary rounded-full"></div>
-                  <span>Focused: {Math.round(focusMinutesToday)}m</span>
-                  {currentTimerProgress > 0 && (
-                    <Badge variant="secondary" className="animate-pulse">
-                      +{Math.round(currentTimerProgress)}m active
-                    </Badge>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-muted rounded-full"></div>
-                  <span>Remaining: {Math.max(0, goalMinutes - focusedMinutes)}m</span>
-                </div>
+            <div className="w-full mt-6 space-y-4 text-center">
+              <div className="text-2xl font-light">
+                You've focused for{' '}
+                <strong className="font-semibold text-primary">
+                  {focusedMinutes}
+                </strong>{' '}
+                out of{' '}
+                <strong className="font-semibold">{goalMinutes}</strong>{' '}
+                minutes today.
               </div>
-
-              <div className="flex items-center justify-between pt-2 border-t">
-                <div className="text-sm text-muted-foreground">
-                  {sessionsToday.length} sessions today
-                  {currentTimerProgress > 0 && ' + 1 active'}
-                </div>
-                <div className="text-lg font-semibold">
-                  {Math.round((focusedMinutes / goalMinutes) * 100)}% complete
-                </div>
-              </div>
+              {currentTimerProgress > 0 && (
+                <Badge variant="secondary" className="animate-pulse">
+                  +{Math.round(currentTimerProgress)}m in active session
+                </Badge>
+              )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Recent Sessions */}
-        <Card className="lg:col-span-3">
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Recent Sessions</CardTitle>
-            <CardDescription>
-              Your latest focus sessions
-            </CardDescription>
+            <CardDescription>Your latest focus sessions</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {sessions.slice(0, 5).map(session => (
-                <div key={session.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
-                  <div className="flex items-center gap-3">
-                    {session.completed ? (
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <Clock className="h-4 w-4 text-orange-500" />
-                    )}
-                    <div>
-                      <p className="text-sm font-medium">
-                        {new Date(session.startTime).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(session.startTime).toLocaleDateString()}
-                      </p>
+            <div className="space-y-4">
+              {sessions.slice(0, 5).map((session, index) => (
+                <React.Fragment key={session.id}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {session.completed ? (
+                        <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                      ) : (
+                        <Clock className="h-5 w-5 text-muted-foreground" />
+                      )}
+                      <div>
+                        <p className="text-sm font-medium">
+                          {new Date(session.startTime).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(session.startTime).toLocaleDateString()}
+                        </p>
+                      </div>
                     </div>
+                    <Badge
+                      variant={session.completed ? 'default' : 'secondary'}
+                      className="font-mono"
+                    >
+                      {Math.round(session.duration / 60)}m
+                    </Badge>
                   </div>
-                  <Badge variant={session.completed ? "default" : "secondary"}>
-                    {Math.round(session.duration / 60)}m
-                  </Badge>
-                </div>
+                  {index < sessions.slice(0, 5).length - 1 && <Separator />}
+                </React.Fragment>
               ))}
               {sessions.length === 0 && (
-                <div className="text-center py-6">
-                  <Timer className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-muted-foreground mb-2">No sessions yet</p>
+                <div className="text-center py-10 border-2 border-dashed rounded-lg">
+                  <Timer className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-1">
+                    No Sessions Yet
+                  </h3>
+                  <p className="text-muted-foreground mb-4 text-sm">
+                    Start a focus session to see your progress.
+                  </p>
                   <Button asChild>
-                    <Link to="/focus">Start Your First Session</Link>
+                    <Link to="/focus">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Start First Session
+                    </Link>
                   </Button>
                 </div>
               )}
