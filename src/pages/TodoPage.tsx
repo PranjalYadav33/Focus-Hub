@@ -208,14 +208,17 @@ const TaskForm: React.FC<{
                   <SelectValue placeholder="Select priority" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.values(Priority).map(p => (
-                    <SelectItem key={p} value={p}>
-                      <div className="flex items-center gap-2">
-                        <priorityConfig[p].icon className="h-4 w-4" />
-                        {priorityConfig[p].label}
-                      </div>
-                    </SelectItem>
-                  ))}
+                  {Object.values(Priority).map(p => {
+                    const Icon = priorityConfig[p].icon;
+                    return (
+                      <SelectItem key={p} value={p}>
+                        <div className="flex items-center gap-2">
+                          <Icon className="h-4 w-4" />
+                          {priorityConfig[p].label}
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
